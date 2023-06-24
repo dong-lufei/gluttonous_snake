@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简版贪吃蛇</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      #root {
+        text-align: center;
+      }
+      #root > div {
+        display: flex;
+        justify-content: center;
+      }
+      #root > div > div {
+        width: calc(min(4.5vw, 4.5vh));
+        height: calc(min(4.5vw, 4.5vh));
+        background-color: #333;
+      }
+      #score {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        font-family: Arial;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="score"></div>
+    <div id="root">按 Enter 键开始</div>
+    <script>
+      // 获取 DOM
+      const root = document.getElementById("root")
+      const score = document.getElementById("score")
+
+      // 改变颜色的方法
+      const changeColor = (i, j, color) =>
+        (root.children[i].children[j].style.backgroundColor = color)
+
+      // 判断点是否在蛇身上
+      const inSnake = (x, y) => s.locs.some(loc => loc[0] === x && loc[1] === y)
+
+      // 创建新游戏
+      const newGame = () => ({
+        locs: [[n / 2, n / 2]],
+        food: null,
+        tdir: 0,
+        dir: 0,
+        timeout: 0,
+      })
+
+      // 初始化变量
+      const n = 20
+      let s = null
+
+      // 监听键盘事件
+      document.onkeydown = ({ keyCode }) => {
+        // 回车键开始游戏
+        if (keyCode === 13) {
+          root.innerHTML = Array(n)
+            .fill(`<div>${Array(n).fill(`<div></div>`).join("")}</div>`)
+            .join("")
+          if (s) clearTimeout(s.timeout)
+          s = newGame()
+          gameLoop()
+        }
+        // 上下左右方向键控制移动
+        if (keyCode > 36 && keyCode < 41 && s.dir % 2 == keyCode % 2) {
+          s.tdir = keyCode - 37
+        }
+      }
+
+      // 游戏主循环
+      const gameLoop = () => {
+        let speed = 250
+        let scoreNum = s.locs.length - 1 ?? 0
+
+        // 更新蛇头方向
+        s.dir = s.tdir
+
+        // 在地图上生成食物
+        while (!s.food || inSnake(...s.food)) {
+          s.food = [0, 0].map(() => Math.floor(Math.random() * n))
+        }
+        changeColor(...s.food, "#eee")
+
+        // 移动蛇
+        const [x, y] = s.locs[0].map((loc, i) =>
+          s.dir % 2 !== i ? loc + s.dir + i - 2 : loc,
+        )
+
+        if ([x, y].every((loc, i) => loc === s.food[i])) {
+          // 吃到了食物
+          s.food = null
+        } else if (Math.min(x, y) < 0 || Math.max(x, y) >= n || inSnake(x, y)) {
+          // 撞到了墙或自己
+          return
+        } else {
+          // 没有吃到食物，位移蛇尾
+          changeColor(...s.locs.pop(), "#333")
+        }
+        s.locs.unshift([x, y])
+        changeColor(x, y, "#5a7")
+
+        speed = speed - scoreNum * 1.5
+        speed = speed <= 50 ? 50 : speed
+        // 更新得分
+        score.textContent =
+          "得分: " + scoreNum + "  ，每 " + speed + " 毫秒移动一次"
+
+        s.timeout = setTimeout(gameLoop, speed)
+      }
+    </script>
+  </body>
+</html>
